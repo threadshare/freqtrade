@@ -19,9 +19,7 @@ from freqtrade.exceptions import DependencyException, OperationalException
 from freqtrade.misc import safe_value_fallback
 from freqtrade.persistence.migrations import check_migrate
 
-
 logger = logging.getLogger(__name__)
-
 
 _DECL_BASE: Any = declarative_base()
 _SQL_DOCS_URL = 'http://docs.sqlalchemy.org/en/latest/core/engines.html#database-urls'
@@ -50,7 +48,8 @@ def init_db(db_url: str, clean_open_orders: bool = False) -> None:
         })
 
     try:
-        engine = create_engine(db_url, future=True, **kwargs)
+        # TODO 暂时设置成10000s，方便debug
+        engine = create_engine(db_url, future=True, connect_args={'connect_timeout': 10000}, **kwargs)
     except NoSuchModuleError:
         raise OperationalException(f"Given value for db_url: '{db_url}' "
                                    f"is no valid database URL! (See {_SQL_DOCS_URL})")
@@ -636,7 +635,7 @@ class LocalTrade():
 
             # skip case if trailing-stop changed the stoploss already.
             if (trade.stop_loss == trade.initial_stop_loss
-               and trade.initial_stop_loss_pct != desired_stoploss):
+                    and trade.initial_stop_loss_pct != desired_stoploss):
                 # Stoploss value got changed
 
                 logger.info(f"Stoploss for {trade} needs adjustment...")
@@ -826,7 +825,7 @@ class Trade(_DECL_BASE, LocalTrade):
             func.sum(Trade.close_profit).label('profit_sum'),
             func.sum(Trade.close_profit_abs).label('profit_sum_abs'),
             func.count(Trade.pair).label('count')
-        ).filter(Trade.is_open.is_(False))\
+        ).filter(Trade.is_open.is_(False)) \
             .group_by(Trade.pair) \
             .order_by(desc('profit_sum_abs')) \
             .all()
