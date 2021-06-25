@@ -339,7 +339,9 @@ class RPC:
             self, stake_currency: str, fiat_display_currency: str,
             start_date: datetime = datetime.fromtimestamp(0)) -> Dict[str, Any]:
         """ Returns cumulative profit statistics """
-        trades = Trade.get_trades([Trade.open_date >= start_date]).order_by(Trade.id).all()
+        trade_filter = ((Trade.is_open.is_(False) & (Trade.close_date >= start_date)) |
+                        Trade.is_open.is_(True))
+        trades = Trade.get_trades(trade_filter).order_by(Trade.id).all()
 
         profit_all_coin = []
         profit_all_ratio = []
@@ -822,8 +824,11 @@ class RPC:
         )
         if pair not in _data:
             raise RPCException(f"No data for {pair}, {timeframe} in {timerange} found.")
+        from freqtrade.data.dataprovider import DataProvider
         from freqtrade.resolvers.strategy_resolver import StrategyResolver
         strategy = StrategyResolver.load_strategy(config)
+        strategy.dp = DataProvider(config, exchange=None, pairlists=None)
+
         df_analyzed = strategy.analyze_ticker(_data[pair], {'pair': pair})
 
         return RPC._convert_dataframe_to_dict(strategy.get_strategy_name(), pair, timeframe,
