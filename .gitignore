@@ -96,4 +96,9 @@ target/
 #exceptions
 !*.gitkeep
 
+# ignore config file
 tmp.py
+all-pairs.json
+config.json
+pairs.json
+pairs-eft-down.json
