@@ -14,7 +14,6 @@ from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.resolvers import ExchangeResolver
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -110,7 +109,6 @@ def start_data_preporcessing(args: Dict[str, Any]) -> None:
     config = setup_utils_configuration(args, RunMode.UTIL_EXCHANGE)
 
     timerange = TimeRange()
-
     if 'timerange' in config:
         timerange = timerange.parse_timerange(config['timerange'])
 
@@ -118,7 +116,26 @@ def start_data_preporcessing(args: Dict[str, Any]) -> None:
         raise OperationalException(
             "Data pre-processing requires a list of pairs. "
             "Please check the documentation on how to configure this.")
+    # TODO pairs convert ETH/BTC => ETH/USDT BTC/USDT
+    # init exchange. maybe will update ohclv data
+    exchange = ExchangeResolver.load_exchange(config['exchange']['name'], config, validate=False)
+    # validate config pairs
+    exchange.validate_pairs(config['pairs'])
+    # filter available pair
+    expanded_pairs = expand_pairlist(config['pairs'], list(exchange.markets))
+    # check timeframe
+    exchange.validate_timeframes(config['timeframe'])  # just support one timeframe
+    # download data which pair is miss
+    pairs_not_available = refresh_backtest_ohlcv_data(
+        exchange, pairs=expanded_pairs, timeframes=[config['timeframe']],
+        datadir=config['datadir'], timerange=timerange,
+        new_pairs_days=timerange.timerange2days(),
+        erase=False, data_format=config['dataformat_ohlcv'])
+    if pairs_not_available:
+        logger.info(f"Pairs [{','.join(pairs_not_available)}] not available "
+                    f"on exchange {exchange.name}.")
 
+    # fill miss data
 
 
 
