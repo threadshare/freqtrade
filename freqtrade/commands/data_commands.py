@@ -138,7 +138,6 @@ def start_data_preporcessing(args: Dict[str, Any]) -> None:
     # fill miss data
 
 
-
 def start_list_data(args: Dict[str, Any]) -> None:
     """
     List available backtest data

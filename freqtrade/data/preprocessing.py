@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 def preprocessing_data_to_file(datadir: Path,
                                timeframe: str,
                                pairs: List[str],
-                               info_pair: str="",
+                               info_pair: str = "",
                                timerange: Optional[TimeRange] = None) -> bool:
     if not timerange:
         logger.warning("preprocessing_data_to_file: timerange params is required")
@@ -30,13 +30,14 @@ def preprocessing_data_to_file(datadir: Path,
     left.columns = [pair_list[0]]
     # left.set_index("date")
     right = df[pair_list[1]].set_index("date")
-    right.columns=[pair_list[1]]
+    right.columns = [pair_list[1]]
     # right.set_index("date")
     new_df = left.join(right, on="date")
     pass
-    import pandas as pd
+    # import pandas as pd
 
     # a = pd.DataFrame()
     # a.join()
     # a.set_index()
     # a.columns
+    return True

@@ -114,9 +114,10 @@ class TimeRange:
     def timerange2days(self) -> int:
         """
             Calcuate days by timerange
-            When timerange's start or stop not timestamp, start will use stop-300d. stop will use now utc timestamp
+            When timerange's start or stop not timestamp,
+            start will use stop-300d. stop will use now utc timestamp
         """
-        stopts = arrow.utcnow() if self.stopts == 0 else self.stopts
+        stopts = arrow.utcnow().int_timestamp if self.stopts == 0 else self.stopts
         startts = stopts - 300 * 24 * 3600 if self.startts == 0 else self.startts
         diff = stopts - startts
         return int(diff / (3600 * 24)) if diff > 0 else 0
