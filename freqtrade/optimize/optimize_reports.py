@@ -378,10 +378,10 @@ def generate_strategy_stats(btdata: Dict[str, DataFrame],
         'trailing_only_offset_is_reached': config.get('trailing_only_offset_is_reached', False),
         'use_custom_stoploss': config.get('use_custom_stoploss', False),
         'minimal_roi': config['minimal_roi'],
-        'use_sell_signal': config['ask_strategy']['use_sell_signal'],
-        'sell_profit_only': config['ask_strategy']['sell_profit_only'],
-        'sell_profit_offset': config['ask_strategy']['sell_profit_offset'],
-        'ignore_roi_if_buy_signal': config['ask_strategy']['ignore_roi_if_buy_signal'],
+        'use_sell_signal': config['use_sell_signal'],
+        'sell_profit_only': config['sell_profit_only'],
+        'sell_profit_offset': config['sell_profit_offset'],
+        'ignore_roi_if_buy_signal': config['ignore_roi_if_buy_signal'],
         **daily_stats,
         **trade_stats
     }
@@ -663,6 +663,8 @@ def show_backtest_results(config: Dict, backtest_stats: Dict):
         # Print Strategy summary table
 
         table = text_table_strategy(backtest_stats['strategy_comparison'], stake_currency)
+        print(f"{results['backtest_start']} -> {results['backtest_end']} |"
+              f" Max open trades : {results['max_open_trades']}")
         print(' STRATEGY SUMMARY '.center(len(table.splitlines()[0]), '='))
         print(table)
         print('=' * len(table.splitlines()[0]))
