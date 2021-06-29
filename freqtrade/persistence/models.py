@@ -46,10 +46,11 @@ def init_db(db_url: str, clean_open_orders: bool = False) -> None:
         kwargs.update({
             'connect_args': {'check_same_thread': False},
         })
+    # TODO 暂时设置MySQL的timeout，方便debug
+    if db_url.startswith('mysql+pymysql'):
+        kwargs.update({'connect_timeout': 10000})
 
     try:
-        # TODO 暂时设置成10000s，方便debug
-        kwargs.update({'connect_timeout': 10000})
         engine = create_engine(db_url, future=True, **kwargs)
     except NoSuchModuleError:
         raise OperationalException(f"Given value for db_url: '{db_url}' "
