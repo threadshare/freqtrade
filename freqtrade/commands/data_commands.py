@@ -103,6 +103,25 @@ def start_convert_data(args: Dict[str, Any], ohlcv: bool = True) -> None:
                               erase=args['erase'])
 
 
+def start_data_preporcessing(args: Dict[str, Any]) -> None:
+    """
+    Pre-processing data from OHCLV data
+    """
+    config = setup_utils_configuration(args, RunMode.UTIL_EXCHANGE)
+
+    timerange = TimeRange()
+
+    if 'timerange' in config:
+        timerange = timerange.parse_timerange(config['timerange'])
+
+    if 'pairs' not in config:
+        raise OperationalException(
+            "Data pre-processing requires a list of pairs. "
+            "Please check the documentation on how to configure this.")
+
+
+
+
 def start_list_data(args: Dict[str, Any]) -> None:
     """
     List available backtest data
