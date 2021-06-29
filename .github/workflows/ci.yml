@@ -6,6 +6,7 @@ on:
       - master
       - stable
       - develop
+      - zzc_dev
     tags:
   release:
     types: [published]
