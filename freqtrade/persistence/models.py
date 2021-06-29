@@ -49,7 +49,8 @@ def init_db(db_url: str, clean_open_orders: bool = False) -> None:
 
     try:
         # TODO 暂时设置成10000s，方便debug
-        engine = create_engine(db_url, future=True, connect_args={'connect_timeout': 10000}, **kwargs)
+        kwargs.update({'connect_timeout': 10000})
+        engine = create_engine(db_url, future=True, **kwargs)
     except NoSuchModuleError:
         raise OperationalException(f"Given value for db_url: '{db_url}' "
                                    f"is no valid database URL! (See {_SQL_DOCS_URL})")
