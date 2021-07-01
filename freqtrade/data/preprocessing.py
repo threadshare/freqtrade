@@ -44,7 +44,7 @@ class DataPreprocessing:
                 "Data pre-processing requires a list of pairs. "
                 "Please check the documentation on how to configure this.")
         # TODO now just support XXX/USDT pair To facilitate analysis and research
-        for pair in self.pairs.values:
+        for pair in self.pairs:
             pair_list = pair.split("/")
             if len(pair_list) != 2 or pair_list[1] != "USDT":
                 raise ParamsException("pair invalid pair: {}".format(pair))
