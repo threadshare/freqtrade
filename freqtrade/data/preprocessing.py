@@ -65,7 +65,7 @@ class DataPreprocessing:
                            f"on exchange {self.exchange.name}.")
 
     def processing_data_to_csv_file(self) -> None:
-        data = load_data(self.datadir, self.timeframe, timerange=self.timerange)
+        data = load_data(self.datadir, self.timeframe, self.expanded_pairs, timerange=self.timerange)
 
         df = {pair: item.loc[:, ["date", "close"]] for pair, item in data.items()}
         columns = [str(item).split("/")[0] for item in df.keys()]

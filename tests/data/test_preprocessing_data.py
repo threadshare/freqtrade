@@ -1,8 +1,18 @@
-from freqtrade.configuration import TimeRange
-from freqtrade.data.preprocessing import preprocessing_data_to_file
+from freqtrade.data.preprocessing import DataPreprocessing
 
 
 def test_preprocessing_data_to_file(testdatadir) -> None:
-    timerange = TimeRange.parse_timerange("20180110-20180130")
-    preprocessing_data_to_file(datadir=testdatadir, timeframe='5m', pairs=['UNITTEST/BTC', 'ETC/BTC'],
-                               timerange=timerange)
+    custom_config = {
+        "exchange": {
+            "name": "binance"
+        },
+        "timeframe": "1d",
+        "timerange": "20210101-20210130",
+        "pairs": ["1INCH/USDT", "AAVE/USDT"],
+        "dataformat_ohlcv": "json",
+        "datadir": testdatadir,
+        "dry_run": True,
+        "stake_currency": "USDT"
+    }
+    obj = DataPreprocessing(custom_config)
+    obj.execute()
