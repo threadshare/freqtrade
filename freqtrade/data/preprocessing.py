@@ -68,7 +68,7 @@ class DataPreprocessing:
         data = load_data(self.datadir, self.timeframe, self.expanded_pairs, timerange=self.timerange)
 
         df = {pair: item.loc[:, ["date", "close"]] for pair, item in data.items()}
-        columns = [str(item).split("/")[0] for item in df.keys()]
+        # columns = [str(item).split("/")[0] for item in df.keys()]
         pair_list = [pair for pair in data.keys()]
         left = df[pair_list[0]].set_index("date")
         left.columns = [pair_list[0]]
@@ -76,7 +76,7 @@ class DataPreprocessing:
         right = df[pair_list[1]].set_index("date")
         right.columns = [pair_list[1]]
         # right.set_index("date")
-        new_df = left.join(right, on="date")
+        # new_df = left.join(right, on="date")
         # import pandas as pd
 
         # a = pd.DataFrame()
