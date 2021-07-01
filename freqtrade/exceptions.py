@@ -13,6 +13,11 @@ class OperationalException(FreqtradeException):
     Most of the time, this is caused by an invalid Configuration.
     """
 
+class ParamsException(FreqtradeException):
+    """
+    Require
+    """
+
 
 class DependencyException(FreqtradeException):
     """

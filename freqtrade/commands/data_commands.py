@@ -13,6 +13,7 @@ from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.resolvers import ExchangeResolver
+from freqtrade.data.preprocessing import DataPreprocessing
 
 logger = logging.getLogger(__name__)
 
@@ -107,35 +108,11 @@ def start_data_preporcessing(args: Dict[str, Any]) -> None:
     Pre-processing data from OHCLV data
     """
     config = setup_utils_configuration(args, RunMode.UTIL_EXCHANGE)
-
-    timerange = TimeRange()
-    if 'timerange' in config:
-        timerange = timerange.parse_timerange(config['timerange'])
-
-    if 'pairs' not in config:
-        raise OperationalException(
-            "Data pre-processing requires a list of pairs. "
-            "Please check the documentation on how to configure this.")
-    # TODO pairs convert ETH/BTC => ETH/USDT BTC/USDT
-    # init exchange. maybe will update ohclv data
-    exchange = ExchangeResolver.load_exchange(config['exchange']['name'], config, validate=False)
-    # validate config pairs
-    exchange.validate_pairs(config['pairs'])
-    # filter available pair
-    expanded_pairs = expand_pairlist(config['pairs'], list(exchange.markets))
-    # check timeframe
-    exchange.validate_timeframes(config['timeframe'])  # just support one timeframe
-    # download data which pair is miss
-    pairs_not_available = refresh_backtest_ohlcv_data(
-        exchange, pairs=expanded_pairs, timeframes=[config['timeframe']],
-        datadir=config['datadir'], timerange=timerange,
-        new_pairs_days=timerange.timerange2days(),
-        erase=False, data_format=config['dataformat_ohlcv'])
-    if pairs_not_available:
-        logger.info(f"Pairs [{','.join(pairs_not_available)}] not available "
-                    f"on exchange {exchange.name}.")
-
-    # fill miss data
+    # data preprocessing
+    logger.info("Data pre-processing starting.")
+    obj = DataPreprocessing(config)
+    obj.execute()
+    logger.info("Data pre-processing finished.")
 
 
 def start_list_data(args: Dict[str, Any]) -> None:
