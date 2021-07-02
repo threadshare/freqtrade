@@ -1,8 +1,14 @@
 """
 Functions to pre-processing data
 """
+import json
 import logging
+import os.path
 from typing import List, Optional, Dict, Any
+
+import arrow
+import pandas as pd
+from pandas import DataFrame
 
 from freqtrade.configuration import TimeRange
 from freqtrade.data.history import load_data, refresh_backtest_ohlcv_data
@@ -26,7 +32,7 @@ class DataPreprocessing:
         self.exchange: Optional[Exchange] = ExchangeResolver.load_exchange(exchange_name=self.exchange_name,
                                                                            config=self.config,
                                                                            validate=False)
-        self.expanded_pairs: Optional[List[str]] = expand_pairlist(self.pairs, list(self.exchange.markets))
+        self.expanded_pairs: List[str] = expand_pairlist(self.pairs, list(self.exchange.markets))
 
     def get_timerange(self):
         timerange = TimeRange()
@@ -43,11 +49,16 @@ class DataPreprocessing:
             raise OperationalException(
                 "Data pre-processing requires a list of pairs. "
                 "Please check the documentation on how to configure this.")
-        # TODO now just support XXX/USDT pair To facilitate analysis and research
+        not_supported_pairs = []
         for pair in self.pairs:
             pair_list = pair.split("/")
             if len(pair_list) != 2 or pair_list[1] != "USDT":
+                not_supported_pairs.append(pair)
                 raise ParamsException("pair invalid pair: {}".format(pair))
+        if not not_supported_pairs:
+            logger.warning("Data pre-processing only support */USDT pair. this pair: {} will not format".format(
+                json.dumps(not_supported_pairs)))
+            self.pairs = [item for item in self.pairs if item not in not_supported_pairs]
         # validate config pairs
         self.exchange.validate_pairs(self.pairs)
         # check timeframe
@@ -64,25 +75,47 @@ class DataPreprocessing:
             logger.warning(f"Pairs [{','.join(pairs_not_available)}] not available "
                            f"on exchange {self.exchange.name}.")
 
-    def processing_data_to_csv_file(self) -> None:
-        data = load_data(self.datadir, self.timeframe, self.expanded_pairs, timerange=self.timerange)
+    @staticmethod
+    def _valid_pair(pair: str) -> bool:
+        if len(pair.split('/')) != 2:
+            return False
+        return True
 
-        df = {pair: item.loc[:, ["date", "close"]] for pair, item in data.items()}
-        # columns = [str(item).split("/")[0] for item in df.keys()]
-        pair_list = [pair for pair in data.keys()]
-        left = df[pair_list[0]].set_index("date")
-        left.columns = [pair_list[0]]
-        # left.set_index("date")
-        right = df[pair_list[1]].set_index("date")
-        right.columns = [pair_list[1]]
-        # right.set_index("date")
-        # new_df = left.join(right, on="date")
-        # import pandas as pd
+    def processing_data_to_csv_file(self):
+        data: Dict[str, DataFrame] = load_data(self.datadir, self.timeframe, self.expanded_pairs,
+                                               timerange=self.timerange)
 
-        # a = pd.DataFrame()
-        # a.join()
-        # a.set_index()
-        # a.columns
+        df: Dict[str, DataFrame] = {pair: item.loc[:, ["date", "close"]] for pair, item in data.items()}
+
+        if len(df) == 1:
+            for pair, item in df.items():
+                if not self._valid_pair(pair):
+                    logger.warning("Invalid Pair: {}".format(pair))
+                    continue
+                base_name = pair.split("/")[0]
+                item.rename(columns={"close": base_name}, inplace=True)
+                item.set_index("date", inplace=True)
+                item.to_csv(self.save_file_path())
+                return
+
+        if len(df) > 1:
+            columns = [str(item).split("/")[0] or None for item in df.keys()]
+            df_items = [item for item in df.values()]
+            i = 1
+            res = df_items[0]
+            res.rename(columns={"close": columns[0]}, inplace=True)
+
+            while len(df_items) > i:
+                df_items[i].rename(columns={"close": columns[i]}, inplace=True)
+                res = pd.merge(res, df_items[i], on="date", how="left")
+                i += 1
+            res.set_index("date", inplace=True)
+            res.to_csv(self.save_file_path())
+
+    def save_file_path(self):
+        base_pairs: str = "_".join([item.split("/")[0] for item in self.expanded_pairs])
+        return os.path.join(self.datadir,
+                            "{}_{}_data_preprocessing.csv".format(arrow.utcnow().int_timestamp, base_pairs))
 
     def execute(self) -> None:
         # check config
@@ -91,3 +124,4 @@ class DataPreprocessing:
         self.check_and_refresh_exchange_data()
         # format data and save to csv file
         self.processing_data_to_csv_file()
+        logger.info("data pre-processing finished")

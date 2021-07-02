@@ -1,5 +1,3 @@
-
-
 class FreqtradeException(Exception):
     """
     Freqtrade base exception. Handled at the outermost level.
@@ -12,6 +10,7 @@ class OperationalException(FreqtradeException):
     Requires manual intervention and will stop the bot.
     Most of the time, this is caused by an invalid Configuration.
     """
+
 
 class ParamsException(FreqtradeException):
     """

@@ -1,7 +1,8 @@
 from freqtrade.data.preprocessing import DataPreprocessing
+from tests.conftest import log_has, log_has_re
 
 
-def test_preprocessing_data_to_file(testdatadir) -> None:
+def test_preprocessing_data_to_file(testdatadir, caplog) -> None:
     custom_config = {
         "exchange": {
             "name": "binance"
@@ -16,3 +17,4 @@ def test_preprocessing_data_to_file(testdatadir) -> None:
     }
     obj = DataPreprocessing(custom_config)
     obj.execute()
+    assert log_has('data pre-processing finished', caplog)
