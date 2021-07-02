@@ -86,7 +86,7 @@ class DataPreprocessing:
                                                timerange=self.timerange)
 
         df: Dict[str, DataFrame] = {pair: item.loc[:, ["date", "close"]] for pair, item in data.items()}
-
+        file_path = self.save_file_path()
         if len(df) == 1:
             for pair, item in df.items():
                 if not self._valid_pair(pair):
@@ -95,7 +95,7 @@ class DataPreprocessing:
                 base_name = pair.split("/")[0]
                 item.rename(columns={"close": base_name}, inplace=True)
                 item.set_index("date", inplace=True)
-                item.to_csv(self.save_file_path())
+                item.to_csv(file_path)
                 return
 
         if len(df) > 1:
@@ -110,12 +110,12 @@ class DataPreprocessing:
                 res = pd.merge(res, df_items[i], on="date", how="left")
                 i += 1
             res.set_index("date", inplace=True)
-            res.to_csv(self.save_file_path())
+            res.to_csv(file_path)
+        logger.info("save csv file path: {}".format(file_path))
 
     def save_file_path(self):
-        base_pairs: str = "_".join([item.split("/")[0] for item in self.expanded_pairs])
         return os.path.join(self.datadir,
-                            "{}_{}_data_preprocessing.csv".format(arrow.utcnow().int_timestamp, base_pairs))
+                            "{}_data_preprocessing.csv".format(arrow.utcnow().int_timestamp))
 
     def execute(self) -> None:
         # check config

@@ -56,7 +56,7 @@ ARGS_BUILD_HYPEROPT = ["user_data_dir", "hyperopt", "template"]
 
 ARGS_CONVERT_DATA = ["pairs", "format_from", "format_to", "erase"]
 ARGS_CONVERT_DATA_OHLCV = ARGS_CONVERT_DATA + ["timeframes"]
-ARGS_DATA_PREPROCESSING = ["exchange", "timeframe", "timerange", "dataformat_ohlcv", "pairs"]
+ARGS_DATA_PREPROCESSING = ["exchange", "timeframe", "timerange", "dataformat_ohlcv", "pairs", "pairs_file"]
 
 ARGS_LIST_DATA = ["exchange", "dataformat_ohlcv", "pairs"]
 
