@@ -29,6 +29,8 @@ class DataPreprocessing:
         self.pairs: Optional[List[str]] = config['pairs']
         self.dataformat_ohlcv = config['dataformat_ohlcv']
         self.datadir = config['datadir']
+        self.format_datadir = config['format_datadir']
+        self.refresh_data: bool = config.get('refresh_data', False)
         self.exchange: Optional[Exchange] = ExchangeResolver.load_exchange(exchange_name=self.exchange_name,
                                                                            config=self.config,
                                                                            validate=False)
@@ -55,7 +57,7 @@ class DataPreprocessing:
             if len(pair_list) != 2 or pair_list[1] != "USDT":
                 not_supported_pairs.append(pair)
                 raise ParamsException("pair invalid pair: {}".format(pair))
-        if not not_supported_pairs:
+        if not_supported_pairs:
             logger.warning("Data pre-processing only support */USDT pair. this pair: {} will not format".format(
                 json.dumps(not_supported_pairs)))
             self.pairs = [item for item in self.pairs if item not in not_supported_pairs]
@@ -114,14 +116,15 @@ class DataPreprocessing:
         logger.info("save csv file path: {}".format(file_path))
 
     def save_file_path(self):
-        return os.path.join(self.datadir,
+        return os.path.join(self.format_datadir,
                             "{}_data_preprocessing.csv".format(arrow.utcnow().int_timestamp))
 
     def execute(self) -> None:
         # check config
         self.check_params()
         # init exchange and refresh data
-        self.check_and_refresh_exchange_data()
+        if self.refresh_data:
+            self.check_and_refresh_exchange_data()
         # format data and save to csv file
         self.processing_data_to_csv_file()
         logger.info("data pre-processing finished")
