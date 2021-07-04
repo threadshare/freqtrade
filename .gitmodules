@@ -1,0 +1,3 @@
+[submodule "user_data/strategies"]
+	path = user_data/strategies
+	url = git@github.com:threadshare/freqtrade-strategies-private.git
