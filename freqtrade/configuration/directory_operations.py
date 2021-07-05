@@ -6,12 +6,10 @@ from typing import Any, Dict, Optional
 from freqtrade.constants import USER_DATA_FILES
 from freqtrade.exceptions import OperationalException
 
-
 logger = logging.getLogger(__name__)
 
 
 def create_datadir(config: Dict[str, Any], datadir: Optional[str] = None) -> Path:
-
     folder = Path(datadir) if datadir else Path(f"{config['user_data_dir']}/data")
     if not datadir:
         # set datadir
@@ -21,6 +19,18 @@ def create_datadir(config: Dict[str, Any], datadir: Optional[str] = None) -> Pat
     if not folder.is_dir():
         folder.mkdir(parents=True)
         logger.info(f'Created data directory: {datadir}')
+    return folder
+
+
+def create_format_datadir(config: Dict[str, Any], datadir: Optional[str] = None) -> Path:
+    folder = Path(datadir) if datadir else Path(f"{config['user_data_dir']}/data_preprocessing")
+    if not datadir:
+        exchange_name = config.get('exchange', {}).get("name").lower()
+        folder = folder.joinpath(exchange_name)
+
+    if not folder.is_dir():
+        folder.mkdir(parents=True)
+        logger.info("Created data_preprocessing directory: {}".format(datadir))
     return folder
 
 

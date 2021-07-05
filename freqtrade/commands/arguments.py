@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 from freqtrade.commands.cli_options import AVAILABLE_CLI_OPTIONS
 from freqtrade.constants import DEFAULT_CONFIG
 
-
 ARGS_COMMON = ["verbosity", "logfile", "version", "config", "datadir", "user_data_dir"]
 
 ARGS_STRATEGY = ["strategy", "strategy_path"]
@@ -57,6 +56,7 @@ ARGS_BUILD_HYPEROPT = ["user_data_dir", "hyperopt", "template"]
 
 ARGS_CONVERT_DATA = ["pairs", "format_from", "format_to", "erase"]
 ARGS_CONVERT_DATA_OHLCV = ARGS_CONVERT_DATA + ["timeframes"]
+ARGS_DATA_PREPROCESSING = ["exchange", "timeframe", "timerange", "dataformat_ohlcv", "pairs", "pairs_file", "refresh_data"]
 
 ARGS_LIST_DATA = ["exchange", "dataformat_ohlcv", "pairs"]
 
@@ -175,7 +175,8 @@ class Arguments:
                                         start_list_markets, start_list_strategies,
                                         start_list_timeframes, start_new_config, start_new_hyperopt,
                                         start_new_strategy, start_plot_dataframe, start_plot_profit,
-                                        start_show_trades, start_test_pairlist, start_trading)
+                                        start_show_trades, start_test_pairlist, start_trading,
+                                        start_data_preporcessing)
 
         subparsers = self.parser.add_subparsers(dest='command',
                                                 # Use custom message when no subhandler is added
@@ -240,6 +241,15 @@ class Arguments:
         )
         convert_trade_data_cmd.set_defaults(func=partial(start_convert_data, ohlcv=False))
         self._build_args(optionlist=ARGS_CONVERT_DATA, parser=convert_trade_data_cmd)
+
+        # Add data-preprocessing subcommand
+        data_preprocessing_cmd = subparsers.add_parser(
+            'data-preprocessing',
+            help='Preprocess OHCL data from one format to another.',
+            parents=[_common_parser],
+        )
+        data_preprocessing_cmd.set_defaults(func=start_data_preporcessing)
+        self._build_args(optionlist=ARGS_DATA_PREPROCESSING, parser=data_preprocessing_cmd)
 
         # Add list-data subcommand
         list_data_cmd = subparsers.add_parser(
