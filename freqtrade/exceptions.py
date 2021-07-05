@@ -14,7 +14,13 @@ class OperationalException(FreqtradeException):
 
 class ParamsException(FreqtradeException):
     """
-    Require
+    Params invalid and will stop the program
+    """
+
+
+class FileException(FreqtradeException):
+    """
+    File exception and will stop the program
     """
 
 

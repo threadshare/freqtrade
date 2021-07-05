@@ -56,7 +56,10 @@ ARGS_BUILD_HYPEROPT = ["user_data_dir", "hyperopt", "template"]
 
 ARGS_CONVERT_DATA = ["pairs", "format_from", "format_to", "erase"]
 ARGS_CONVERT_DATA_OHLCV = ARGS_CONVERT_DATA + ["timeframes"]
-ARGS_DATA_PREPROCESSING = ["exchange", "timeframe", "timerange", "dataformat_ohlcv", "pairs", "pairs_file", "refresh_data"]
+ARGS_DATA_PREPROCESSING = ["exchange", "timeframe", "timerange", "dataformat_ohlcv", "pairs", "pairs_file",
+                           "refresh_data"]
+
+ARGS_ANALYSE = ARGS_DATA_PREPROCESSING + ["exportfilename"]
 
 ARGS_LIST_DATA = ["exchange", "dataformat_ohlcv", "pairs"]
 
@@ -177,13 +180,17 @@ class Arguments:
                                         start_list_timeframes, start_new_config, start_new_hyperopt,
                                         start_new_strategy, start_plot_dataframe, start_plot_profit,
                                         start_show_trades, start_test_pairlist, start_trading,
-                                        start_data_preporcessing)
+                                        start_data_preporcessing, start_analyse)
 
         subparsers = self.parser.add_subparsers(dest='command',
                                                 # Use custom message when no subhandler is added
                                                 # shown from `main.py`
                                                 # required=True
                                                 )
+        # add analyse subcommand
+        analyse_cmd = subparsers.add_parser('analyse', help="Analyze module.", parents=[_common_parser])
+        analyse_cmd.set_defaults(func=start_analyse)
+        self._build_args(optionlist=ARGS_ANALYSE, parser=analyse_cmd)
 
         # Add trade subcommand
         trade_cmd = subparsers.add_parser('trade', help='Trade module.',
