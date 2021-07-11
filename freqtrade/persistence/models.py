@@ -49,6 +49,7 @@ def init_db(db_url: str, clean_open_orders: bool = False) -> None:
     # TODO 暂时设置MySQL的timeout，方便debug
     if db_url.startswith('mysql+pymysql'):
         kwargs.update({'connect_timeout': 10000})
+
     try:
         engine = create_engine(db_url, future=True, **kwargs)
     except NoSuchModuleError:

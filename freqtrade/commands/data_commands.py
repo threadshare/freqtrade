@@ -13,7 +13,7 @@ from freqtrade.exceptions import OperationalException
 from freqtrade.exchange import timeframe_to_minutes
 from freqtrade.plugins.pairlist.pairlist_helpers import expand_pairlist
 from freqtrade.resolvers import ExchangeResolver
-
+from freqtrade.data.preprocessing import DataPreprocessing
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +101,18 @@ def start_convert_data(args: Dict[str, Any], ohlcv: bool = True) -> None:
         convert_trades_format(config,
                               convert_from=args['format_from'], convert_to=args['format_to'],
                               erase=args['erase'])
+
+
+def start_data_preporcessing(args: Dict[str, Any]) -> None:
+    """
+    Pre-processing data from OHCLV data
+    """
+    config = setup_utils_configuration(args, RunMode.UTIL_EXCHANGE)
+    # data preprocessing
+    logger.info("Data pre-processing starting.")
+    obj = DataPreprocessing(config)
+    obj.execute()
+    logger.info("Data pre-processing finished.")
 
 
 def start_list_data(args: Dict[str, Any]) -> None:

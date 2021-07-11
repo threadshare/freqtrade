@@ -72,10 +72,20 @@ AVAILABLE_CLI_OPTIONS = {
         help='Path to directory with historical backtesting data.',
         metavar='PATH',
     ),
+    "format_datadir": Arg(
+        '--format-datadir',
+        help='Path to directory with historical backtesting data which pre-processing',
+        metavar='PATH',
+    ),
     "user_data_dir": Arg(
         '--userdir', '--user-data-dir',
         help='Path to userdata directory.',
         metavar='PATH',
+    ),
+    "refresh_data": Arg(
+        '--refresh-data',
+        help='Refresh exchange ohclv data to backtesting data.',
+        action="store_true",
     ),
     "reset": Arg(
         '--reset',

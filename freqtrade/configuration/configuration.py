@@ -10,13 +10,12 @@ from typing import Any, Callable, Dict, List, Optional
 from freqtrade import constants
 from freqtrade.configuration.check_exchange import check_exchange
 from freqtrade.configuration.deprecated_settings import process_temporary_deprecated_settings
-from freqtrade.configuration.directory_operations import create_datadir, create_userdata_dir
+from freqtrade.configuration.directory_operations import create_datadir, create_userdata_dir, create_format_datadir
 from freqtrade.configuration.load_config import load_config_file, load_file
 from freqtrade.enums import NON_UTIL_MODES, TRADING_MODES, RunMode
 from freqtrade.exceptions import OperationalException
 from freqtrade.loggers import setup_logging
 from freqtrade.misc import deep_merge_dicts
-
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +192,9 @@ class Configuration:
         config.update({'datadir': create_datadir(config, self.args.get('datadir', None))})
         logger.info('Using data directory: %s ...', config.get('datadir'))
 
+        config.update({"format_datadir": create_format_datadir(config, self.args.get("format_datadir", None))})
+        logger.info("Using format data directory: %s ...", config.get("format_datadir"))
+
         if self.args.get('exportfilename'):
             self._args_to_config(config, argname='exportfilename',
                                  logstring='Storing backtest results to {} ...')
@@ -206,7 +208,7 @@ class Configuration:
         # This will override the strategy configuration
         self._args_to_config(config, argname='timeframe',
                              logstring='Parameter -i/--timeframe detected ... '
-                             'Using timeframe: {} ...')
+                                       'Using timeframe: {} ...')
 
         self._args_to_config(config, argname='position_stacking',
                              logstring='Parameter --enable-position-stacking detected ...')
@@ -238,13 +240,13 @@ class Configuration:
 
         self._args_to_config(config, argname='stake_amount',
                              logstring='Parameter --stake-amount detected, '
-                             'overriding stake_amount to: {} ...')
+                                       'overriding stake_amount to: {} ...')
         self._args_to_config(config, argname='dry_run_wallet',
                              logstring='Parameter --dry-run-wallet detected, '
-                             'overriding dry_run_wallet to: {} ...')
+                                       'overriding dry_run_wallet to: {} ...')
         self._args_to_config(config, argname='fee',
                              logstring='Parameter --fee detected, '
-                             'setting fee to: {} ...')
+                                       'setting fee to: {} ...')
 
         self._args_to_config(config, argname='timerange',
                              logstring='Parameter --timerange detected: {} ...')
@@ -282,7 +284,7 @@ class Configuration:
 
         self._args_to_config(config, argname='epochs',
                              logstring='Parameter --epochs detected ... '
-                             'Will run Hyperopt with for {} epochs ...'
+                                       'Will run Hyperopt with for {} epochs ...'
                              )
 
         self._args_to_config(config, argname='spaces',
@@ -408,12 +410,13 @@ class Configuration:
 
         self._args_to_config(config, argname='new_pairs_days',
                              logstring='Detected --new-pairs-days: {}')
+        self._args_to_config(config, argname='refresh_data', logstring='Refresh OHCLV history data')
 
     def _process_runmode(self, config: Dict[str, Any]) -> None:
 
         self._args_to_config(config, argname='dry_run',
                              logstring='Parameter --dry-run detected, '
-                             'overriding dry_run to: {} ...')
+                                       'overriding dry_run to: {} ...')
 
         if not self.runmode:
             # Handle real mode, infer dry/live from config
@@ -435,7 +438,7 @@ class Configuration:
                         configuration instead of the content)
         """
         if (argname in self.args and self.args[argname] is not None
-           and self.args[argname] is not False):
+                and self.args[argname] is not False):
 
             config.update({argname: self.args[argname]})
             if logfun:
