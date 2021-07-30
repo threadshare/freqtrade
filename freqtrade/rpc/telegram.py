@@ -208,15 +208,25 @@ class Telegram(RPCHandler):
         else:
             msg['stake_amount_fiat'] = 0
 
-        message = (f"\N{LARGE BLUE CIRCLE} *{msg['exchange']}:* Buying {msg['pair']}"
-                   f" (#{msg['trade_id']})\n"
-                   f"*Amount:* `{msg['amount']:.8f}`\n"
-                   f"*Open Rate:* `{msg['limit']:.8f}`\n"
-                   f"*Current Rate:* `{msg['current_rate']:.8f}`\n"
-                   f"*Total:* `({round_coin_value(msg['stake_amount'], msg['stake_currency'])}")
-
+        content = []
+        content.append(
+            f"\N{LARGE BLUE CIRCLE} *{msg['exchange']}:* Buying {msg['pair']}"
+            f" (#{msg['trade_id']})\n"
+        )
+        if msg.get('buy_tag', None):
+            content.append(f"*Buy Tag:* `{msg['buy_tag']}`\n")
+        content.append(f"*Amount:* `{msg['amount']:.8f}`\n")
+        content.append(f"*Open Rate:* `{msg['limit']:.8f}`\n")
+        content.append(f"*Current Rate:* `{msg['current_rate']:.8f}`\n")
+        content.append(
+            f"*Total:* `({round_coin_value(msg['stake_amount'], msg['stake_currency'])}"
+        )
         if msg.get('fiat_currency', None):
-            message += f", {round_coin_value(msg['stake_amount_fiat'], msg['fiat_currency'])}"
+            content.append(
+                f", {round_coin_value(msg['stake_amount_fiat'], msg['fiat_currency'])}"
+            )
+
+        message = ''.join(content)
         message += ")`"
         return message
 
@@ -354,6 +364,7 @@ class Telegram(RPCHandler):
                     "*Trade ID:* `{trade_id}` `(since {open_date_hum})`",
                     "*Current Pair:* {pair}",
                     "*Amount:* `{amount} ({stake_amount} {base_currency})`",
+                    "*Buy Tag:* `{buy_tag}`" if r['buy_tag'] else "",
                     "*Open Rate:* `{open_rate:.8f}`",
                     "*Close Rate:* `{close_rate}`" if r['close_rate'] else "",
                     "*Current Rate:* `{current_rate:.8f}`",
@@ -494,11 +505,11 @@ class Telegram(RPCHandler):
             start_date)
         profit_closed_coin = stats['profit_closed_coin']
         profit_closed_percent_mean = stats['profit_closed_percent_mean']
-        profit_closed_percent_sum = stats['profit_closed_percent_sum']
+        profit_closed_percent = stats['profit_closed_percent']
         profit_closed_fiat = stats['profit_closed_fiat']
         profit_all_coin = stats['profit_all_coin']
         profit_all_percent_mean = stats['profit_all_percent_mean']
-        profit_all_percent_sum = stats['profit_all_percent_sum']
+        profit_all_percent = stats['profit_all_percent']
         profit_all_fiat = stats['profit_all_fiat']
         trade_count = stats['trade_count']
         first_trade_date = stats['first_trade_date']
@@ -514,7 +525,7 @@ class Telegram(RPCHandler):
                 markdown_msg = ("*ROI:* Closed trades\n"
                                 f"∙ `{round_coin_value(profit_closed_coin, stake_cur)} "
                                 f"({profit_closed_percent_mean:.2f}%) "
-                                f"({profit_closed_percent_sum} \N{GREEK CAPITAL LETTER SIGMA}%)`\n"
+                                f"({profit_closed_percent} \N{GREEK CAPITAL LETTER SIGMA}%)`\n"
                                 f"∙ `{round_coin_value(profit_closed_fiat, fiat_disp_cur)}`\n")
             else:
                 markdown_msg = "`No closed trade` \n"
@@ -523,7 +534,7 @@ class Telegram(RPCHandler):
                 f"*ROI:* All trades\n"
                 f"∙ `{round_coin_value(profit_all_coin, stake_cur)} "
                 f"({profit_all_percent_mean:.2f}%) "
-                f"({profit_all_percent_sum} \N{GREEK CAPITAL LETTER SIGMA}%)`\n"
+                f"({profit_all_percent} \N{GREEK CAPITAL LETTER SIGMA}%)`\n"
                 f"∙ `{round_coin_value(profit_all_fiat, fiat_disp_cur)}`\n"
                 f"*Total Trade Count:* `{trade_count}`\n"
                 f"*{'First Trade opened' if not timescale else 'Showing Profit since'}:* "

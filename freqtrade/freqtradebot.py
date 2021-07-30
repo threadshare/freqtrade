@@ -420,20 +420,24 @@ class FreqtradeBot(LoggingMixin):
             return False
 
         # running get_signal on historical data fetched
-        (buy, sell) = self.strategy.get_signal(pair, self.strategy.timeframe, analyzed_df)
+        (buy, sell, buy_tag) = self.strategy.get_signal(
+            pair,
+            self.strategy.timeframe,
+            analyzed_df
+        )
 
         if buy and not sell:
             stake_amount = self.wallets.get_trade_stake_amount(pair, self.edge)
 
             bid_check_dom = self.config.get('bid_strategy', {}).get('check_depth_of_market', {})
             if ((bid_check_dom.get('enabled', False)) and
-               (bid_check_dom.get('bids_to_ask_delta', 0) > 0)):
+                    (bid_check_dom.get('bids_to_ask_delta', 0) > 0)):
                 if self._check_depth_of_market_buy(pair, bid_check_dom):
-                    return self.execute_buy(pair, stake_amount)
+                    return self.execute_buy(pair, stake_amount, buy_tag=buy_tag)
                 else:
                     return False
 
-            return self.execute_buy(pair, stake_amount)
+            return self.execute_buy(pair, stake_amount, buy_tag=buy_tag)
         else:
             return False
 
@@ -462,7 +466,7 @@ class FreqtradeBot(LoggingMixin):
             return False
 
     def execute_buy(self, pair: str, stake_amount: float, price: Optional[float] = None,
-                    forcebuy: bool = False) -> bool:
+                    forcebuy: bool = False, buy_tag: Optional[str] = None) -> bool:
         """
         Executes a limit buy for the given pair
         :param pair: pair for which we want to create a LIMIT_BUY
@@ -475,7 +479,7 @@ class FreqtradeBot(LoggingMixin):
             buy_limit_requested = price
         else:
             # Calculate price
-            buy_limit_requested = self.exchange.get_buy_rate(pair, True)
+            buy_limit_requested = self.exchange.get_rate(pair, refresh=True, side="buy")
 
         if not buy_limit_requested:
             raise PricingError('Could not determine buy price.')
@@ -565,6 +569,7 @@ class FreqtradeBot(LoggingMixin):
             exchange=self.exchange.id,
             open_order_id=order_id,
             strategy=self.strategy.get_strategy_name(),
+            buy_tag=buy_tag,
             timeframe=timeframe_to_minutes(self.config['timeframe'])
         )
         trade.orders.append(order_obj)
@@ -590,6 +595,7 @@ class FreqtradeBot(LoggingMixin):
         msg = {
             'trade_id': trade.id,
             'type': RPCMessageType.BUY,
+            'buy_tag': trade.buy_tag,
             'exchange': self.exchange.name.capitalize(),
             'pair': trade.pair,
             'limit': trade.open_rate,
@@ -609,11 +615,12 @@ class FreqtradeBot(LoggingMixin):
         """
         Sends rpc notification when a buy cancel occurred.
         """
-        current_rate = self.exchange.get_buy_rate(trade.pair, False)
+        current_rate = self.exchange.get_rate(trade.pair, refresh=False, side="buy")
 
         msg = {
             'trade_id': trade.id,
             'type': RPCMessageType.BUY_CANCEL,
+            'buy_tag': trade.buy_tag,
             'exchange': self.exchange.name.capitalize(),
             'pair': trade.pair,
             'limit': trade.open_rate,
@@ -634,6 +641,7 @@ class FreqtradeBot(LoggingMixin):
         msg = {
             'trade_id': trade.id,
             'type': RPCMessageType.BUY_FILL,
+            'buy_tag': trade.buy_tag,
             'exchange': self.exchange.name.capitalize(),
             'pair': trade.pair,
             'open_rate': trade.open_rate,
@@ -692,10 +700,14 @@ class FreqtradeBot(LoggingMixin):
             analyzed_df, _ = self.dataprovider.get_analyzed_dataframe(trade.pair,
                                                                       self.strategy.timeframe)
 
-            (buy, sell) = self.strategy.get_signal(trade.pair, self.strategy.timeframe, analyzed_df)
+            (buy, sell, _) = self.strategy.get_signal(
+                trade.pair,
+                self.strategy.timeframe,
+                analyzed_df
+            )
 
         logger.debug('checking sell')
-        sell_rate = self.exchange.get_sell_rate(trade.pair, True)
+        sell_rate = self.exchange.get_rate(trade.pair, refresh=True, side="sell")
         if self._check_and_execute_sell(trade, sell_rate, buy, sell):
             return True
 
@@ -1132,7 +1144,8 @@ class FreqtradeBot(LoggingMixin):
         profit_rate = trade.close_rate if trade.close_rate else trade.close_rate_requested
         profit_trade = trade.calc_profit(rate=profit_rate)
         # Use cached rates here - it was updated seconds ago.
-        current_rate = self.exchange.get_sell_rate(trade.pair, False) if not fill else None
+        current_rate = self.exchange.get_rate(
+            trade.pair, refresh=False, side="sell") if not fill else None
         profit_ratio = trade.calc_profit_ratio(profit_rate)
         gain = "profit" if profit_ratio > 0 else "loss"
 
@@ -1177,7 +1190,7 @@ class FreqtradeBot(LoggingMixin):
 
         profit_rate = trade.close_rate if trade.close_rate else trade.close_rate_requested
         profit_trade = trade.calc_profit(rate=profit_rate)
-        current_rate = self.exchange.get_sell_rate(trade.pair, False)
+        current_rate = self.exchange.get_rate(trade.pair, refresh=False, side="sell")
         profit_ratio = trade.calc_profit_ratio(profit_rate)
         gain = "profit" if profit_ratio > 0 else "loss"
 

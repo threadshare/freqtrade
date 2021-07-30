@@ -346,6 +346,20 @@ def test_data_to_dataframe_bt(default_conf, mocker, testdatadir) -> None:
     assert processed['UNITTEST/BTC'].equals(processed2['UNITTEST/BTC'])
 
 
+def test_backtest_abort(default_conf, mocker, testdatadir) -> None:
+    patch_exchange(mocker)
+    backtesting = Backtesting(default_conf)
+    backtesting.check_abort()
+
+    backtesting.abort = True
+
+    with pytest.raises(DependencyException, match="Stop requested"):
+        backtesting.check_abort()
+    # abort flag resets
+    assert backtesting.abort is False
+    assert backtesting.progress.progress == 0
+
+
 def test_backtesting_start(default_conf, mocker, testdatadir, caplog) -> None:
     def get_timerange(input1):
         return Arrow(2017, 11, 14, 21, 17), Arrow(2017, 11, 14, 22, 59)
@@ -482,6 +496,7 @@ def test_backtest__enter_trade(default_conf, fee, mocker) -> None:
         0,  # Sell
         0.00099,  # Low
         0.0012,  # High
+        '',  # Buy Signal Name
     ]
     trade = backtesting._enter_trade(pair, row=row)
     assert isinstance(trade, LocalTrade)
@@ -569,6 +584,7 @@ def test_backtest_one(default_conf, fee, mocker, testdatadir) -> None:
          'min_rate': [0.1038, 0.10302485],
          'max_rate': [0.10501, 0.1038888],
          'is_open': [False, False],
+         'buy_tag': [None, None],
          })
     pd.testing.assert_frame_equal(results, expected)
     data_pair = processed[pair]
@@ -713,6 +729,7 @@ def test_backtest_alternate_buy_sell(default_conf, fee, mocker, testdatadir):
                                         pair='UNITTEST/BTC', datadir=testdatadir)
     default_conf['timeframe'] = '1m'
     backtesting = Backtesting(default_conf)
+    backtesting.required_startup = 0
     backtesting._set_strategy(backtesting.strategylist[0])
     backtesting.strategy.advise_buy = _trend_alternate  # Override
     backtesting.strategy.advise_sell = _trend_alternate  # Override
@@ -843,7 +860,7 @@ def test_backtest_start_multi_strat(default_conf, mocker, caplog, testdatadir):
         'locks': [],
         'rejected_signals': 20,
         'final_balance': 1000,
-        })
+    })
     mocker.patch('freqtrade.plugins.pairlistmanager.PairListManager.whitelist',
                  PropertyMock(return_value=['UNITTEST/BTC']))
     mocker.patch('freqtrade.optimize.backtesting.Backtesting.backtest', backtestmock)
